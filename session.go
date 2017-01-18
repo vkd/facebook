@@ -51,6 +51,12 @@ func (session *Session) Put(path string, params Params) (Result, error) {
 	return session.Api(path, PUT, params)
 }
 
+// ApiRaw makes a facebook graph api call
+// Return raw result
+func (session *Session) ApiRaw(path string, method Method, params Params) ([]byte, error) {
+	return session.graphRaw(path, method, params)
+}
+
 // Makes a batch call. Each params represent a single facebook graph api call.
 //
 // BatchApi supports most kinds of batch calls defines in facebook batch api document,
@@ -417,6 +423,42 @@ func (session *Session) graph(path string, method Method, params Params) (res Re
 	}
 
 	return
+}
+
+func (session *Session) graphRaw(path string, method Method, params Params) ([]byte, error) {
+	var graphUrl string
+
+	if params == nil {
+		params = Params{}
+	}
+
+	// always format as json.
+	params["format"] = "json"
+
+	// overwrite method as we always use post
+	params["method"] = method
+
+	// get graph api url.
+	if session.isVideoPost(path, method) {
+		graphUrl = session.getUrl("graph_video", path, nil)
+	} else {
+		graphUrl = session.getUrl("graph", path, nil)
+	}
+
+	var raw struct {
+		Data  json.RawMessage `json:"data"`
+		Error Result          `json:"error"`
+	}
+	_, err := session.sendPostRequest(graphUrl, params, &raw)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(raw.Error) > 0 {
+		return nil, Result{"error": raw.Error}.Err()
+	}
+
+	return []byte(raw.Data), nil
 }
 
 func (session *Session) graphBatch(batchParams Params, params ...Params) ([]Result, error) {

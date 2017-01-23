@@ -9,6 +9,7 @@ package facebook
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"unicode"
 	"unicode/utf8"
@@ -104,7 +105,7 @@ func camelCaseToUnderScore(str string) string {
 
 // Returns error string.
 func (e *Error) Error() string {
-	return e.Message
+	return fmt.Sprintf("%s:%s (%d.%d)", e.Type, e.Message, e.Code, e.ErrorSubcode)
 }
 
 // Creates a new binary data holder.

@@ -19,6 +19,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/buger/jsonparser"
 )
 
 // Makes a facebook graph api call.
@@ -445,20 +447,27 @@ func (session *Session) graphRaw(path string, method Method, params Params) ([]b
 		graphUrl = session.getUrl("graph", path, nil)
 	}
 
-	var raw struct {
-		Data  json.RawMessage `json:"data"`
-		Error Result          `json:"error"`
-	}
+	var raw json.RawMessage
 	_, err := session.sendPostRequest(graphUrl, params, &raw)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(raw.Error) > 0 {
-		return nil, Result{"error": raw.Error}.Err()
+	value, _, _, err := jsonparser.Get(raw, "error")
+	if err != nil {
+		if err == jsonparser.KeyPathNotFoundError {
+			return raw, nil
+		}
+		return nil, err
 	}
 
-	return []byte(raw.Data), nil
+	var e Result
+	err = json.Unmarshal(value, &e)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, Result{"error": e}.Err()
 }
 
 func (session *Session) graphBatch(batchParams Params, params ...Params) ([]Result, error) {

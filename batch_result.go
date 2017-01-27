@@ -23,6 +23,11 @@ type batchResultData struct {
 	Body    string              `facebook=",required"`
 }
 
+type batchRawResultData struct {
+	Code int             `facebook=",required"`
+	Body json.RawMessage `facebook=",required"`
+}
+
 func newBatchResult(res Result) (*BatchResult, error) {
 	var data batchResultData
 	err := res.Decode(&data)

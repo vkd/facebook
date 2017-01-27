@@ -73,6 +73,10 @@ func (session *Session) BatchApi(params ...Params) ([]Result, error) {
 	return session.Batch(nil, params...)
 }
 
+func (session *Session) BatchApiRaw(params ...Params) ([][]byte, error) {
+	return session.graphRawBatch(nil, params...)
+}
+
 // Makes a batch facebook graph api call.
 // Batch is designed for more advanced usage including uploading binary files.
 //
@@ -481,6 +485,27 @@ func (session *Session) graphBatch(batchParams Params, params ...Params) ([]Resu
 	graphUrl := session.getUrl("graph", "", nil)
 	_, err := session.sendPostRequest(graphUrl, batchParams, &res)
 	return res, err
+}
+
+func (session *Session) graphRawBatch(batchParams Params, params ...Params) ([][]byte, error) {
+	if batchParams == nil {
+		batchParams = Params{}
+	}
+
+	batchParams["batch"] = params
+
+	var res []batchRawResultData
+	graphUrl := session.getUrl("graph", "", nil)
+	_, err := session.sendPostRequest(graphUrl, batchParams, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	var resBs [][]byte
+	for _, r := range res {
+		resBs = append(resBs, []byte(r.Body))
+	}
+	return resBs, nil
 }
 
 func (session *Session) graphFQL(params Params) (res Result, err error) {

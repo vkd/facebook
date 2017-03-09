@@ -687,7 +687,11 @@ func (session *Session) getUrl(name, path string, params Params) string {
 	}
 
 	buf := &bytes.Buffer{}
-	buf.WriteString(domainMap[name])
+	if session.DebugURL != "" {
+		buf.WriteString(session.DebugURL)
+	} else {
+		buf.WriteString(domainMap[name])
+	}
 
 	// facebook versioning.
 	if session.Version == "" {

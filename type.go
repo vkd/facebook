@@ -50,6 +50,8 @@ type Session struct {
 	appsecretProof       string // pre-calculated "appsecret_proof" value.
 
 	debug DebugMode // using facebook debugging api in every request.
+
+	DebugURL string
 }
 
 // API HTTP method.
